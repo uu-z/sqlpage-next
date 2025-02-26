@@ -1,27 +1,14 @@
-import React from 'react';
-
-interface MetricProps {
-  label: string;
-  value: number | string;
-  icon?: string;
-  trend?: number;
-  prefix?: string;
-  suffix?: string;
-}
+import React from "react";
+import { SQLPageProps } from "../../types/unified";
 
 interface MetricsProps {
-  items: MetricProps[];
+  items?: SQLPageProps[]; // Multiple metrics
 }
 
 // Single metric component
-const MetricItem: React.FC<MetricProps> = ({ 
-  label, 
-  value, 
-  icon, 
-  trend, 
-  prefix = '', 
-  suffix = '' 
-}) => {
+const MetricItem: React.FC<SQLPageProps> = (props) => {
+  const { label, value, icon, prefix, suffix, trend } = props;
+
   return (
     <div className="metric-card">
       <div className="metric-header">
@@ -29,11 +16,13 @@ const MetricItem: React.FC<MetricProps> = ({
         {icon && <span className="metric-icon">{icon}</span>}
       </div>
       <div className="metric-value">
-        {prefix}{value}{suffix}
+        {prefix}
+        {value}
+        {suffix}
       </div>
       {trend !== undefined && (
-        <div className={`metric-trend ${trend >= 0 ? 'positive' : 'negative'}`}>
-          {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
+        <div className={`metric-trend ${trend >= 0 ? "positive" : "negative"}`}>
+          {trend >= 0 ? "↑" : "↓"} {Math.abs(trend)}%
         </div>
       )}
       <style jsx>{`
@@ -41,7 +30,7 @@ const MetricItem: React.FC<MetricProps> = ({
           background-color: white;
           border-radius: 8px;
           padding: 16px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           margin: 10px 0;
           min-width: 200px;
         }
@@ -79,10 +68,10 @@ const MetricItem: React.FC<MetricProps> = ({
   );
 };
 
-// Multiple metrics component (grid layout)
-const MetricComponent: React.FC<MetricProps | MetricsProps> = (props) => {
-  // Check if we have a single metric or multiple metrics
-  if ('items' in props && Array.isArray(props.items)) {
+// Main component that handles both single and multiple metrics
+const MetricComponent: React.FC<SQLPageProps | MetricsProps> = (props) => {
+  // If items array is provided, render multiple metrics
+  if ("items" in props && props.items) {
     return (
       <div className="metrics-grid">
         {props.items.map((metric, index) => (
@@ -99,9 +88,9 @@ const MetricComponent: React.FC<MetricProps | MetricsProps> = (props) => {
       </div>
     );
   }
-  
-  // Single metric
-  return <MetricItem {...props as MetricProps} />;
+
+  // Single metric case
+  return <MetricItem {...(props as SQLPageProps)} />;
 };
 
 export default MetricComponent;

@@ -18,55 +18,68 @@ SELECT
   NULL as cta_link;
 
 -- @component metrics
-SELECT 'Total Users' as label, COUNT(*) as value, NULL as trend, NULL as prefix, NULL as suffix, '👤' as icon
+SELECT 
+  'Total Users' as label, 
+  COUNT(*) as value,
+  '👤' as icon
 FROM users;
 
-SELECT 'Active Users' as label, COUNT(*) as value, 
-  (SELECT CAST(COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM users), 0) as INTEGER) FROM users WHERE is_active = 1) as trend,
-  NULL as prefix, '%' as suffix, '✓' as icon
+SELECT 
+  'Active Users' as label,
+  COUNT(*) as value,
+  '✓' as icon,
+  '%' as suffix,
+  (SELECT CAST(COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM users), 0) as INTEGER) FROM users WHERE is_active = 1) as trend
 FROM users
 WHERE is_active = 1;
 
-SELECT 'Total Products' as label, COUNT(*) as value, NULL as trend, NULL as prefix, NULL as suffix, '📦' as icon
+SELECT 
+  'Total Products' as label,
+  COUNT(*) as value,
+  '📦' as icon
 FROM products;
 
-SELECT 'Total Revenue' as label, SUM(revenue) as value, NULL as trend, '$' as prefix, NULL as suffix, '💰' as icon
+SELECT 
+  'Total Revenue' as label,
+  SUM(revenue) as value,
+  '💰' as icon,
+  '$' as prefix
 FROM sales;
 
 -- @component chart
 SELECT 
   'bar' as type,
-  'Monthly Sales' as title,
-  'Revenue' as dataset_label;
+  'Monthly Sales' as label;
 
 SELECT 
   strftime('%Y-%m', sale_date) as label,
-  SUM(revenue) as value
+  SUM(revenue) as value,
+  '$' as prefix
 FROM sales
 GROUP BY strftime('%Y-%m', sale_date)
 ORDER BY label;
 
 -- @component table
-SELECT 
-  'Product' as column_name,
-  'string' as data_type
-UNION ALL
-SELECT 'Category', 'string'
-UNION ALL
-SELECT 'Stock', 'number'
-UNION ALL
-SELECT 'Price', 'currency'
-UNION ALL
-SELECT 'Revenue', 'currency';
-
-SELECT 
-  p.name as Product,
-  p.category as Category,
-  p.stock as Stock,
-  '$' || printf('%.2f', p.price) as Price,
-  '$' || printf('%.2f', COALESCE(SUM(s.revenue), 0)) as Revenue
-FROM products p
-LEFT JOIN sales s ON p.id = s.product_id
-GROUP BY p.id
-ORDER BY SUM(s.revenue) DESC NULLS LAST
-LIMIT 5;
+WITH top_products AS (
+  SELECT 
+    p.id,
+    p.name as product_name,
+    p.category,
+    p.stock as "#stock",
+    p.price as "$price",
+    COALESCE(SUM(s.revenue), 0) as "$revenue",
+    COALESCE(
+      CAST(
+        ((SUM(s.revenue) - LAG(SUM(s.revenue)) OVER (ORDER BY SUM(s.revenue))) * 100.0 / 
+        NULLIF(LAG(SUM(s.revenue)) OVER (ORDER BY SUM(s.revenue)), 0)
+      ) as INTEGER
+      ), 0
+    ) as "!revenue_change",
+    '📦' as "&icon"
+  FROM products p
+  LEFT JOIN sales s ON p.id = s.product_id
+  GROUP BY p.id
+  ORDER BY SUM(s.revenue) DESC NULLS LAST
+  LIMIT 5
+)
+SELECT * FROM top_products;

@@ -1,29 +1,34 @@
-import React from 'react';
+import React from "react";
+import { SQLPageProps } from "../../types/unified";
 
-interface ChartProps {
-  type: 'bar' | 'line' | 'pie';
-  title?: string;
-  labels: string[];
-  datasets: {
-    label: string;
-    data: number[];
-    backgroundColor?: string | string[];
-    borderColor?: string | string[];
-  }[];
+interface ChartProps extends SQLPageProps {
+  data?: SQLPageProps[]; // Array of data points
 }
 
-const ChartComponent: React.FC<ChartProps> = ({ type, title, labels, datasets }) => {
+const ChartComponent: React.FC<ChartProps> = ({
+  type = "bar",
+  label,
+  data = [],
+}) => {
   // In a real implementation, you would use a charting library like Chart.js
   // This is a simplified representation
   return (
     <div className="chart-container">
-      {title && <h3 className="chart-title">{title}</h3>}
+      {label && <h3 className="chart-title">{label}</h3>}
       <div className="chart">
         <div className="chart-placeholder">
           <p>Chart: {type}</p>
-          <p>Labels: {labels.join(', ')}</p>
-          <p>Datasets: {datasets.map(d => d.label).join(', ')}</p>
-          <p className="note">Note: In a real implementation, this would render an actual {type} chart</p>
+          <p>Title: {label}</p>
+          <p>
+            Data:{" "}
+            {data
+              .map((d) => `${d.prefix || ""}${d.value}${d.suffix || ""}`)
+              .join(", ") || "No data"}
+          </p>
+          <p className="note">
+            Note: In a real implementation, this would render an actual {type}{" "}
+            chart
+          </p>
         </div>
       </div>
       <style jsx>{`
